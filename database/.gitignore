@@ -1,1 +1,1 @@
-*.sqlite*
+# Allow sqlite for demo
