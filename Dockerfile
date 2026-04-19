@@ -1,15 +1,9 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev libpng-dev libonig-dev libxml2-dev libzip-dev zip unzip curl git \
     && docker-php-ext-install pdo pdo_sqlite mbstring exif pcntl bcmath gd zip \
     && rm -rf /var/lib/apt/lists/*
-
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-          /etc/apache2/mods-enabled/mpm_event.load \
-          /etc/apache2/mods-enabled/mpm_worker.conf \
-          /etc/apache2/mods-enabled/mpm_worker.load \
-    && a2enmod mpm_prefork rewrite
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -19,14 +13,9 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && cp .env.example .env \
+    && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
     && chmod -R 777 storage bootstrap/cache database
 
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' \
-        /etc/apache2/sites-available/000-default.conf \
-    && printf '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n' \
-        >> /etc/apache2/sites-available/000-default.conf
+EXPOSE 8080
 
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-CMD ["/start.sh"]
+CMD ["sh", "-c", "touch /var/www/html/database/database.sqlite && php artisan migrate --force && exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
