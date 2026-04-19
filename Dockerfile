@@ -17,4 +17,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "set -xe && echo PORT=$PORT && touch /var/www/html/database/database.sqlite && php artisan key:generate --force && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
+CMD ["sh", "-c", "touch /var/www/html/database/database.sqlite && php artisan migrate --force 2>&1 && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
